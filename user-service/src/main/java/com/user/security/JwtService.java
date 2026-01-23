@@ -1,5 +1,6 @@
 package com.user.security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -34,5 +35,24 @@ public class JwtService {
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(key)
                 .compact();
+    }
+    public String extractUsername(String token) {
+        return getClaims(token).getSubject();
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            return !getClaims(token).getExpiration().before(new Date());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

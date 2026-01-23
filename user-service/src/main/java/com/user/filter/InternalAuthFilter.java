@@ -22,15 +22,23 @@ public class InternalAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String authHeader = request.getHeader(INTERNAL_AUTH_HEADER);
-
-        // allow auth endpoints without header
+        // Skip auth & public endpoints
         if (request.getRequestURI().startsWith("/api/auth")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (!INTERNAL_AUTH_VALUE.equals(authHeader)) {
+        // If JWT is present, let JWT filter handle it
+        String bearer = request.getHeader("Authorization");
+        if (bearer != null && bearer.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Internal service call check
+        String internalHeader = request.getHeader(INTERNAL_AUTH_HEADER);
+
+        if (!INTERNAL_AUTH_VALUE.equals(internalHeader)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Unauthorized internal access");
             return;
